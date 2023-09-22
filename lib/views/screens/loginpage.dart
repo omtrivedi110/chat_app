@@ -11,6 +11,7 @@ class LoginPage extends StatelessWidget {
 
   String id = "";
   String pass = "";
+  TextEditingController passController = TextEditingController();
   GlobalKey<FormState> formkey = GlobalKey<FormState>();
 
   @override
@@ -56,10 +57,18 @@ class LoginPage extends StatelessWidget {
                   Gap(s.height * 0.02),
                   TextFormField(
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
+                    controller: passController,
+                    decoration: InputDecoration(
                       hintText: "1234",
+                      suffixIcon: IconButton(
+                        onPressed: () {
+                          passController.text = FirebaseHelper.firebaseHelper
+                              .auto_generate_pass();
+                        },
+                        icon: const Icon(Icons.password_rounded),
+                      ),
                       labelText: "Password",
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
                     ),
                     onSaved: (val) {
                       pass = val!;

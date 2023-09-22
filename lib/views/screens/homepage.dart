@@ -1,5 +1,7 @@
 import 'package:chat_app/helpers/firebase_helper.dart';
+import 'package:chat_app/utils/route_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -10,6 +12,14 @@ class HomePage extends StatelessWidget {
       appBar: AppBar(
         title: const Text("HomePage"),
         centerTitle: true,
+        actions: [
+          IconButton(
+              onPressed: () {
+                FirebaseHelper.firebaseHelper.logOut();
+                Get.offNamed(MyRoute.login);
+              },
+              icon: const Icon(Icons.logout)),
+        ],
       ),
       drawer: const Drawer(
         child: Column(

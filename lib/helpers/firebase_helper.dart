@@ -28,7 +28,11 @@ class FirebaseHelper {
       'age': "18",
     };
     firestore.collection(collection).doc(id.toString()).set(data);
-    // log(om.toString());
+  }
+
+  logOut() {
+    FirebaseAuth.instance.signOut();
+    signIn.signOut();
   }
 
   google_sign_in() async {

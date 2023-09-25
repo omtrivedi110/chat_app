@@ -1,5 +1,6 @@
 import 'package:chat_app/firebase_options.dart';
 import 'package:chat_app/utils/route_utils.dart';
+import 'package:chat_app/views/screens/chatpage.dart';
 import 'package:chat_app/views/screens/homepage.dart';
 import 'package:chat_app/views/screens/loginpage.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -32,6 +33,10 @@ class MyApp extends StatelessWidget {
         GetPage(
           name: MyRoute.home,
           page: () => HomePage(),
+        ),
+        GetPage(
+          name: MyRoute.chat,
+          page: () => ChatPage(),
         ),
       ],
     );

@@ -9,7 +9,7 @@ import 'package:get/get.dart';
 class LoginPage extends StatelessWidget {
   LoginPage({super.key});
 
-  String id = "";
+  String mail = "";
   String pass = "";
   TextEditingController passController = TextEditingController();
   GlobalKey<FormState> formkey = GlobalKey<FormState>();
@@ -42,17 +42,16 @@ class LoginPage extends StatelessWidget {
               child: Column(
                 children: [
                   TextFormField(
-                    keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
                       hintText: "xyz@gmial.com",
-                      labelText: "id",
+                      labelText: "Mail",
                       border: OutlineInputBorder(),
                     ),
                     onSaved: (val) {
-                      id = val!;
+                      mail = val!;
                     },
                     validator: (val) =>
-                        (val!.isEmpty) ? "Please Enter Your id" : null,
+                        (val!.isEmpty) ? "Please Enter Your mail" : null,
                   ),
                   Gap(s.height * 0.02),
                   TextFormField(
@@ -83,13 +82,15 @@ class LoginPage extends StatelessWidget {
               height: 20,
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 if (formkey.currentState!.validate()) {
                   formkey.currentState!.save();
-                  FirebaseHelper.firebaseHelper
-                      .addUser(pass: pass, id: int.parse(id));
-                  UserModal userModal = UserModal(id, pass);
-                  Get.offNamed(MyRoute.home, arguments: userModal);
+                  Map<String, dynamic>? data =
+                      await FirebaseHelper.firebaseHelper.getUser(mail: mail);
+                  // FirebaseHelper.firebaseHelper
+                  //     .addUser(pass: pass, id: int.parse(id));
+                  UserModal userModal = UserModal(mail, pass);
+                  Get.offNamed(MyRoute.home, arguments: mail);
                 }
               },
               child: const Text("Sign In"),
@@ -97,7 +98,7 @@ class LoginPage extends StatelessWidget {
             Gap(s.height * 0.01),
             TextButton.icon(
               onPressed: () {
-                FirebaseHelper.firebaseHelper.google_sign_in();
+                // FirebaseHelper.firebaseHelper.google_sign_in();
                 Get.offNamed(MyRoute.home);
               },
               icon: const Icon(Icons.g_mobiledata_sharp),

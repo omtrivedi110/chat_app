@@ -2,6 +2,7 @@ import 'dart:developer' as dev;
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class FirebaseHelper {
@@ -15,16 +16,6 @@ class FirebaseHelper {
   GoogleSignIn signIn = GoogleSignIn();
   FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  guest() {
-    try {
-      FirebaseAuth.instance.signInAnonymously();
-      return true;
-    } on FirebaseAuthException catch (error) {
-      dev.log(error.toString());
-      return false;
-    }
-  }
-
   Stream<DocumentSnapshot<Map<String, dynamic>>> getStream(
       {required String mail}) {
     return firestore.collection(collection).doc(mail).snapshots();
@@ -34,9 +25,77 @@ class FirebaseHelper {
     mymail = mail;
     DocumentSnapshot<Map<String, dynamic>> doc =
         await firestore.collection(collection).doc(mail).get();
-    dev.log(doc.toString());
     Map<String, dynamic>? data = doc.data();
     return data;
+  }
+
+  deleteChat(
+      {required String sender,
+      required String reciever,
+      required int index}) async {
+    Map<String, dynamic>? senderMap = await getUser(mail: sender);
+    Map<String, dynamic>? recievedMap = await getUser(mail: reciever);
+
+    senderMap!['sent']['${recievedMap!['id']}']['msg'].removeAt(index);
+    senderMap['sent']['${recievedMap['id']}']['time'].removeAt(index);
+
+    recievedMap['recieved']['${senderMap['id']}']['msg'].removeAt(index);
+    recievedMap['recieved']['${senderMap['id']}']['time'].removeAt(index);
+
+    firestore.collection(collection).doc(sender).set(senderMap);
+    firestore.collection(collection).doc(reciever).set(recievedMap);
+  }
+
+  offline({required String mail}) async {
+    Map<String, dynamic>? tmpdata = await getUser(mail: mail);
+    tmpdata!['status'] = "offline";
+
+    firestore.collection(collection).doc(mail).set(tmpdata);
+
+    dev.log(tmpdata.toString());
+  }
+
+  online({required String mail}) async {
+    Map<String, dynamic>? tmpdata = await getUser(mail: mail);
+    tmpdata!['status'] = "online";
+
+    firestore.collection(collection).doc(mail).set(tmpdata);
+  }
+
+  editChat(
+      {required String sender,
+      required String reciever,
+      required int index,
+      required String newMsg}) async {
+    Map<String, dynamic>? senderMap = await getUser(mail: sender);
+    Map<String, dynamic>? recievedMap = await getUser(mail: reciever);
+
+    senderMap!['sent']['${recievedMap!['id']}']['msg'][index] = newMsg;
+
+    recievedMap['recieved']['${senderMap['id']}']['msg'][index] = newMsg;
+
+    firestore.collection(collection).doc(sender).set(senderMap);
+    firestore.collection(collection).doc(reciever).set(recievedMap);
+  }
+
+  addChat(
+      {required String sender,
+      required String reciever,
+      required String newMsg}) async {
+    Map<String, dynamic>? senderMap = await getUser(mail: sender);
+    Map<String, dynamic>? recievedMap = await getUser(mail: reciever);
+
+    String time =
+        "${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}-${DateTime.now().hour}:${DateTime.now().minute}";
+
+    senderMap!['sent']['${recievedMap!['id']}']['msg'].add(newMsg);
+    senderMap['sent']['${recievedMap['id']}']['time'].add(time);
+
+    recievedMap['recieved']['${senderMap['id']}']['msg'].add(newMsg);
+    recievedMap['recieved']['${senderMap['id']}']['time'].add(time);
+
+    firestore.collection(collection).doc(sender).set(senderMap);
+    firestore.collection(collection).doc(reciever).set(recievedMap);
   }
 
   // addUser({required String pass, required int id}) async {
@@ -60,6 +119,17 @@ class FirebaseHelper {
         idToken: authentication.idToken,
         accessToken: authentication.accessToken);
     FirebaseAuth.instance.signInWithCredential(authCredential);
+  }
+
+  //guest
+  guest() {
+    try {
+      FirebaseAuth.instance.signInAnonymously();
+      return true;
+    } on FirebaseAuthException catch (error) {
+      Get.snackbar("Error Occured...", "Error : $error");
+      return false;
+    }
   }
 
   // ignore: non_constant_identifier_names

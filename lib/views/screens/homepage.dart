@@ -33,30 +33,41 @@ class HomePage extends StatelessWidget {
         builder: (context, snap) {
           if (snap.hasData) {
             DocumentSnapshot<Map<String, dynamic>> alldata = snap.data!;
-            log(alldata.toString());
             Map<String, dynamic>? data = alldata.data();
-            log(data.toString());
             List contacts = data!['contacts'];
             name = data['name'];
+            // List<Future<String>> Username = contacts.map((e) async {
+            //   Map<String, dynamic>? tmpuser = await FirebaseHelper
+            //       .firebaseHelper
+            //       .getUser(mail: e.toString());
+            //   return tmpuser!['name'].toString();
+            // }).toList();
+
             return Padding(
               padding: const EdgeInsets.all(16),
               child: ListView.builder(
-                itemCount: contacts.length,
-                itemBuilder: (context, index) => Card(
-                  child: ListTile(
-                    onTap: () async {
-                      Map<String, dynamic>? recieved = await FirebaseHelper
-                          .firebaseHelper
-                          .getUser(mail: contacts[index]);
-                      Map data = {'name': recieved!['name'], 'mail': mail};
-                      Get.toNamed(MyRoute.chat, arguments: data);
-                    },
-                    title: Text(
-                      contacts[index],
-                    ),
-                  ),
-                ),
-              ),
+                  itemCount: contacts.length,
+                  itemBuilder: (context, index) {
+                    return Card(
+                      child: ListTile(
+                        onTap: () async {
+                          Map<String, dynamic>? recieved = await FirebaseHelper
+                              .firebaseHelper
+                              .getUser(mail: contacts[index]);
+                          Map data = {
+                            'name': recieved!['name'],
+                            'mail': mail,
+                            'reciever': recieved['id'],
+                            'recievedMail': contacts[index],
+                          };
+                          Get.toNamed(MyRoute.chat, arguments: data);
+                        },
+                        title: Text(
+                          contacts[index],
+                        ),
+                      ),
+                    );
+                  }),
             );
           } else if (snap.hasError) {
             return Center(
@@ -81,7 +92,8 @@ class HomePage extends StatelessWidget {
               accountEmail: Text(mail),
               currentAccountPicture: const CircleAvatar(
                 foregroundImage: NetworkImage(
-                    "https://e1.pxfuel.com/desktop-wallpaper/454/79/desktop-wallpaper-wild-nature-for-whatsapp-dp-www-galleryneed-awesome-dp.jpg"),
+                  "https://e1.pxfuel.com/desktop-wallpaper/454/79/desktop-wallpaper-wild-nature-for-whatsapp-dp-www-galleryneed-awesome-dp.jpg",
+                ),
               ),
             ),
           ],

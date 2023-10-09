@@ -1,9 +1,7 @@
-import 'dart:developer';
-
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:chat_app/controller/button_controller.dart';
 import 'package:chat_app/controller/status_controller.dart';
 import 'package:chat_app/helpers/firebase_helper.dart';
-import 'package:chat_app/helpers/notification_helper.dart';
 import 'package:chat_app/helpers/notification_helper.dart';
 import 'package:chat_app/modals/chat_modal.dart';
 import 'package:chat_app/views/screens/components/iconbutton.dart';
@@ -20,32 +18,6 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-
-    // initState() {
-    //   WidgetsBinding.instance.addObserver(this);
-    // }
-    //
-    // dispose() {
-    //   WidgetsBinding.instance.removeObserver(this);
-    // }
-
-    switch (state) {
-      case AppLifecycleState.paused:
-        log("tgjkhjgxtyu");
-        FirebaseHelper.firebaseHelper.offline(mail: data['mail']);
-        break;
-      case AppLifecycleState.resumed:
-        log("tgjkhjgxtyu");
-        FirebaseHelper.firebaseHelper.online(mail: data['mail']);
-        break;
-      default:
-        FirebaseHelper.firebaseHelper.offline(mail: data['mail']);
-    }
-  }
-
   Map data = Get.arguments;
   String upValue = "";
 
@@ -54,18 +26,67 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   TextEditingController chatController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    didChangeAppLifecycleState(AppLifecycleState.resumed);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.paused:
+        status_controller.changeSatus(mystatus: "offline", mail: data['mail']);
+        FirebaseHelper.firebaseHelper.offline(mail: data['mail']);
+        break;
+      case AppLifecycleState.resumed:
+        status_controller.changeSatus(mystatus: "online", mail: data['mail']);
+        FirebaseHelper.firebaseHelper.online(mail: data['mail']);
+        break;
+      default:
+        status_controller.changeSatus(mystatus: "offline", mail: data['mail']);
+        FirebaseHelper.firebaseHelper.offline(mail: data['mail']);
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    didChangeAppLifecycleState(AppLifecycleState.paused);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(data['name']),
-            Obx(() {
-              return Text(
-                status_controller.status.value == "online" ? "😊" : "😴",
-              );
-            }),
+            AnimatedTextKit(animatedTexts: [
+              TypewriterAnimatedText(data['name']),
+            ]),
+            SizedBox(
+              width: 30,
+              height: 30,
+              child: StreamBuilder(
+                  stream: FirebaseHelper.firebaseHelper.getStream(
+                    mail: data['recievedMail'],
+                  ),
+                  builder: (ctx, snap) {
+                    if (snap.hasData) {
+                      DocumentSnapshot<Map<String, dynamic>>? doc = snap.data;
+                      Map<String, dynamic>? userData = doc!.data();
+                      return Text(
+                        userData!['status'] == "online" ? "Online" : "Offline",
+                        style: const TextStyle(fontSize: 10),
+                      );
+                    } else {
+                      return const Text(" ");
+                    }
+                  }),
+            ),
           ],
         ),
         leading: MyBack(),
@@ -91,8 +112,9 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
               List sentChat = userData!['sent']['${data['reciever']}']['msg'];
               List sentTime = userData['sent']['${data['reciever']}']['time'];
 
-              //statusCheck
-              status_controller.changeSatus(mystatus: userData['status']);
+              // statusCheck
+              status_controller.changeSatus(
+                  mystatus: userData['status'], mail: data['mail']);
 
               //recieved Data
               List recievedChat =
@@ -143,9 +165,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                   ),
                 ),
               );
-
               alldata.sort((c1, c2) => c1.time.isAfter(c2.time) ? 1 : 0);
-
               return Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -156,64 +176,76 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                         onLongPress: () {
                           if (alldata[index].type == "sent") {
                             showDialog(
-                                context: context,
-                                builder: (context) => Obx(() {
-                                      return AlertDialog(
-                                        title: const Text(
-                                            "What do you want to Do ?"),
-                                        content: Visibility(
-                                          visible:
-                                              button_Controller.up_btn.value,
-                                          child: TextField(
-                                            onSubmitted: (val) {
-                                              FirebaseHelper.firebaseHelper
-                                                  .editChat(
-                                                      sender: data['mail'],
-                                                      reciever:
-                                                          data['recievedMail'],
-                                                      index: sentChat.indexOf(
-                                                          alldata[index].msg),
-                                                      newMsg: val);
-                                            },
-                                            decoration: const InputDecoration(
-                                              border: OutlineInputBorder(),
-                                            ),
-                                          ),
+                              context: context,
+                              builder: (context) => Obx(
+                                () {
+                                  return AlertDialog(
+                                    title:
+                                        const Text("What do you want to Do ?"),
+                                    content: Visibility(
+                                      visible: button_Controller.up_btn.value,
+                                      child: TextField(
+                                        onSubmitted: (val) {
+                                          FirebaseHelper.firebaseHelper
+                                              .editChat(
+                                                  sender: data['mail'],
+                                                  reciever:
+                                                      data['recievedMail'],
+                                                  index: sentChat.indexOf(
+                                                    alldata[index].msg,
+                                                  ),
+                                                  newMsg: val);
+                                        },
+                                        decoration: InputDecoration(
+                                          prefixText: alldata[index].msg,
+                                          border: const OutlineInputBorder(),
                                         ),
-                                        actions: [
-                                          TextButton.icon(
-                                            onPressed: () {
-                                              if (button_Controller
-                                                  .up_btn.value) {
-                                                FirebaseHelper.firebaseHelper
-                                                    .editChat(
-                                                        sender: data['mail'],
-                                                        reciever: data[
-                                                            'recievedMail'],
-                                                        index: sentChat.indexOf(
-                                                            alldata[index].msg),
-                                                        newMsg: upValue);
-                                              }
-                                              button_Controller.changeUpdate();
-                                            },
-                                            icon: const Icon(Icons.cancel),
-                                            label: const Text("Update"),
-                                          ),
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              FirebaseHelper.firebaseHelper
-                                                  .deleteChat(
-                                                sender: data['mail'],
-                                                reciever: data['recievedMail'],
-                                                index: sentChat.indexOf(
-                                                    alldata[index].msg),
-                                              );
-                                            },
-                                            child: const Text("Delete"),
-                                          ),
-                                        ],
-                                      );
-                                    }));
+                                      ),
+                                    ),
+                                    actions: [
+                                      TextButton.icon(
+                                        onPressed: () {
+                                          if (button_Controller.up_btn.value) {
+                                            FirebaseHelper.firebaseHelper
+                                                .editChat(
+                                                    sender: data['mail'],
+                                                    reciever:
+                                                        data['recievedMail'],
+                                                    index: sentChat.indexOf(
+                                                      alldata[index].msg,
+                                                    ),
+                                                    newMsg: upValue);
+                                          }
+                                          button_Controller.changeUpdate();
+                                        },
+                                        icon: Icon(
+                                          button_Controller.up_btn.value
+                                              ? Icons.arrow_upward
+                                              : Icons.cancel,
+                                        ),
+                                        label: Text(
+                                            button_Controller.up_btn.value
+                                                ? "Update"
+                                                : "Cancel"),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          FirebaseHelper.firebaseHelper
+                                              .deleteChat(
+                                            sender: data['mail'],
+                                            reciever: data['recievedMail'],
+                                            index: sentChat
+                                                .indexOf(alldata[index].msg),
+                                          );
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: const Text("Delete"),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            );
                           }
                         },
                         child: Column(
@@ -238,11 +270,22 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                                       : const Radius.circular(30),
                                 ),
                               ),
-                              child: Text(
-                                alldata[index].msg,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w400,
-                                  fontSize: 20,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      alldata[index].msg,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w400,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    Text(
+                                        "${(alldata[index].time.hour > 12) ? alldata[index].time.hour - 12 : alldata[index].time.hour}  :${alldata[index].time.minute}"),
+                                  ],
                                 ),
                               ),
                             ),
@@ -251,39 +294,45 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                       ),
                     ),
                   ),
-                  TextField(
-                    controller: chatController,
-                    decoration: InputDecoration(
-                      suffixIcon: IconButton(
-                        onPressed: () {
-                          FirebaseHelper.firebaseHelper.addChat(
-                              sender: data['mail'],
-                              reciever: data['recievedMail'],
-                              newMsg: chatController.text);
-                          Notification_Helper.notification_helper
-                              .initNotification();
-                          Notification_Helper.notification_helper
-                              .simpleNotification(
-                                  mail: data['mail'], msg: chatController.text);
-                          chatController.clear();
-                        },
-                        icon: const Icon(Icons.send_rounded),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextField(
+                      keyboardType: TextInputType.multiline,
+                      controller: chatController,
+                      decoration: InputDecoration(
+                        suffixIcon: IconButton(
+                          onPressed: () {
+                            FirebaseHelper.firebaseHelper.addChat(
+                                sender: data['mail'],
+                                reciever: data['recievedMail'],
+                                newMsg: chatController.text);
+                            Notification_Helper.notification_helper
+                                .initNotification();
+                            Notification_Helper.notification_helper
+                                .simpleNotification(
+                                    mail: data['mail'],
+                                    msg: chatController.text);
+                            chatController.clear();
+                          },
+                          icon: const Icon(Icons.send_rounded),
+                        ),
+                        border: const OutlineInputBorder(),
                       ),
-                      border: const OutlineInputBorder(),
+                      onSubmitted: (val) {
+                        FirebaseHelper.firebaseHelper.addChat(
+                          sender: data['mail'],
+                          reciever: data['recievedMail'],
+                          newMsg: chatController.text,
+                        );
+                        Notification_Helper.notification_helper
+                            .initNotification();
+                        Notification_Helper.notification_helper
+                            .simpleNotification(
+                                mail: data['recievedMail'],
+                                msg: chatController.text);
+                        chatController.clear();
+                      },
                     ),
-                    onSubmitted: (val) {
-                      FirebaseHelper.firebaseHelper.addChat(
-                        sender: data['mail'],
-                        reciever: data['recievedMail'],
-                        newMsg: chatController.text,
-                      );
-                      Notification_Helper.notification_helper
-                          .initNotification();
-                      Notification_Helper.notification_helper
-                          .simpleNotification(
-                              mail: data['mail'], msg: chatController.text);
-                      chatController.clear();
-                    },
                   ),
                 ],
               );

@@ -51,8 +51,40 @@ class FirebaseHelper {
     tmpdata!['status'] = "offline";
 
     firestore.collection(collection).doc(mail).set(tmpdata);
+  }
 
-    dev.log(tmpdata.toString());
+  addContactData({required String mail, required String senderMail}) async {
+    DocumentSnapshot snapshot =
+        await firestore.collection(idCollection).doc("id").get();
+    Map<String, dynamic>? myid = snapshot.data() as Map<String, dynamic>?;
+    myid!['id']++;
+    Map<String, dynamic> data = {
+      "contacts": [mail],
+      "name": "Newuser",
+      "pass": "iamnew${myid['id']}",
+      "id": myid['id'],
+      "recieved": {
+        '102': {
+          'msg': [],
+          'time': [],
+        }
+      },
+      "sent": {
+        '102': {
+          'msg': [],
+          "time": [],
+        }
+      },
+      "status": "offline",
+    };
+    firestore.collection(collection).doc(senderMail).set(data);
+  }
+
+  Future<String> getId() async {
+    DocumentSnapshot snapshot =
+        await firestore.collection(idCollection).doc("id").get();
+    Map<String, dynamic>? myid = snapshot.data() as Map<String, dynamic>?;
+    return myid!['id'];
   }
 
   online({required String mail}) async {
@@ -78,6 +110,21 @@ class FirebaseHelper {
     firestore.collection(collection).doc(reciever).set(recievedMap);
   }
 
+  logOut() {
+    FirebaseAuth.instance.signOut();
+    signIn.signOut();
+  }
+
+  guest() {
+    try {
+      FirebaseAuth.instance.signInAnonymously();
+      return true;
+    } on FirebaseAuthException catch (error) {
+      Get.snackbar("Error Occured...", "Error : $error");
+      return false;
+    }
+  }
+
   addChat(
       {required String sender,
       required String reciever,
@@ -98,41 +145,6 @@ class FirebaseHelper {
     firestore.collection(collection).doc(reciever).set(recievedMap);
   }
 
-  // addUser({required String pass, required int id}) async {
-  //   Map<String, dynamic> data = {
-  //     'pass': pass,
-  //     'age': "18",
-  //   };
-  //   firestore.collection(collection).doc(id.toString()).set(data);
-  // }
-
-  logOut() {
-    FirebaseAuth.instance.signOut();
-    signIn.signOut();
-  }
-
-  // ignore: non_constant_identifier_names
-  google_Sign_In() async {
-    GoogleSignInAccount? account = await signIn.signIn();
-    GoogleSignInAuthentication authentication = await account!.authentication;
-    AuthCredential authCredential = GoogleAuthProvider.credential(
-        idToken: authentication.idToken,
-        accessToken: authentication.accessToken);
-    FirebaseAuth.instance.signInWithCredential(authCredential);
-  }
-
-  //guest
-  guest() {
-    try {
-      FirebaseAuth.instance.signInAnonymously();
-      return true;
-    } on FirebaseAuthException catch (error) {
-      Get.snackbar("Error Occured...", "Error : $error");
-      return false;
-    }
-  }
-
-  // ignore: non_constant_identifier_names
   String auto_generate_pass() {
     List number = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
     List alphabet = [

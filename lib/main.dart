@@ -1,3 +1,4 @@
+import 'package:chat_app/controller/theme_controller.dart';
 import 'package:chat_app/firebase_options.dart';
 import 'package:chat_app/utils/route_utils.dart';
 import 'package:chat_app/views/screens/chatpage.dart';
@@ -12,17 +13,24 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
+// ignore: must_be_immutable
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  MyApp({super.key});
+
+  ThemeController themeController = Get.put(ThemeController());
 
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
       theme: ThemeData(
         useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
       ),
       debugShowCheckedModeBanner: false,
       getPages: [

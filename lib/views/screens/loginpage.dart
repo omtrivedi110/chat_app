@@ -57,6 +57,7 @@ class LoginPage extends StatelessWidget {
                   TextFormField(
                     keyboardType: TextInputType.emailAddress,
                     controller: passController,
+                    obscureText: true,
                     decoration: InputDecoration(
                       hintText: "1234",
                       suffixIcon: IconButton(

@@ -1,13 +1,12 @@
-import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:chat_app/controller/button_controller.dart';
 import 'package:chat_app/controller/status_controller.dart';
 import 'package:chat_app/helpers/firebase_helper.dart';
 import 'package:chat_app/helpers/notification_helper.dart';
 import 'package:chat_app/modals/chat_modal.dart';
-import 'package:chat_app/views/screens/components/iconbutton.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../components/iconbutton.dart';
 
 // ignore: must_be_immutable
 class ChatPage extends StatefulWidget {
@@ -24,6 +23,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   Button_Controller button_Controller = Get.put(Button_Controller());
   Status_Controller status_controller = Get.put(Status_Controller());
   TextEditingController chatController = TextEditingController();
+  TextEditingController updateController = TextEditingController();
 
   @override
   void initState() {
@@ -58,15 +58,14 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    Size s = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            AnimatedTextKit(animatedTexts: [
-              TypewriterAnimatedText(data['name']),
-            ]),
+            Text(data['name']),
             SizedBox(
               width: 30,
               height: 30,
@@ -196,10 +195,14 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                                                   ),
                                                   newMsg: val);
                                         },
-                                        decoration: InputDecoration(
-                                          prefixText: alldata[index].msg,
-                                          border: const OutlineInputBorder(),
+                                        decoration: const InputDecoration(
+                                          border: OutlineInputBorder(),
                                         ),
+                                        onTap: () {
+                                          updateController.text =
+                                              alldata[index].msg;
+                                        },
+                                        controller: updateController,
                                       ),
                                     ),
                                     actions: [
@@ -219,12 +222,12 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                                           button_Controller.changeUpdate();
                                         },
                                         icon: Icon(
-                                          button_Controller.up_btn.value
+                                          !button_Controller.up_btn.value
                                               ? Icons.arrow_upward
                                               : Icons.cancel,
                                         ),
                                         label: Text(
-                                            button_Controller.up_btn.value
+                                            !button_Controller.up_btn.value
                                                 ? "Update"
                                                 : "Cancel"),
                                       ),
@@ -248,48 +251,60 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                             );
                           }
                         },
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: alldata[index].type == "sent"
-                              ? CrossAxisAlignment.end
-                              : CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              margin: const EdgeInsets.all(5),
-                              padding: const EdgeInsets.all(5),
-                              decoration: BoxDecoration(
-                                color: Colors.blue,
-                                borderRadius: BorderRadius.only(
-                                  topLeft: alldata[index].type == "sent"
-                                      ? const Radius.circular(30)
-                                      : Radius.zero,
-                                  bottomLeft: const Radius.circular(30),
-                                  bottomRight: const Radius.circular(30),
-                                  topRight: alldata[index].type == "sent"
-                                      ? Radius.zero
-                                      : const Radius.circular(30),
+                        child: LimitedBox(
+                          maxWidth: s.width * 0.5,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: alldata[index].type == "sent"
+                                ? CrossAxisAlignment.end
+                                : CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                margin: const EdgeInsets.all(5),
+                                padding: const EdgeInsets.all(5),
+                                decoration: BoxDecoration(
+                                  color: alldata[index].type == "sent"
+                                      ? Colors.green
+                                      : Colors.blue,
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: alldata[index].type == "sent"
+                                        ? const Radius.circular(30)
+                                        : Radius.zero,
+                                    bottomLeft: const Radius.circular(30),
+                                    bottomRight: const Radius.circular(30),
+                                    topRight: alldata[index].type == "sent"
+                                        ? Radius.zero
+                                        : const Radius.circular(30),
+                                  ),
                                 ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      alldata[index].msg,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w400,
-                                        fontSize: 16,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        alldata[index].msg,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w400,
+                                            fontSize: 16),
+                                        textAlign: alldata[index].type == "sent"
+                                            ? TextAlign.left
+                                            : TextAlign.right,
                                       ),
-                                    ),
-                                    Text(
-                                        "${(alldata[index].time.hour > 12) ? alldata[index].time.hour - 12 : alldata[index].time.hour}  :${alldata[index].time.minute}"),
-                                  ],
+                                      Text(
+                                        "${(alldata[index].time.hour > 12) ? alldata[index].time.hour - 12 : alldata[index].time.hour}  :${alldata[index].time.minute}",
+                                        textAlign: alldata[index].type == "sent"
+                                            ? TextAlign.right
+                                            : TextAlign.left,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),

@@ -1,6 +1,7 @@
 import 'package:chat_app/controller/theme_controller.dart';
 import 'package:chat_app/firebase_options.dart';
 import 'package:chat_app/utils/route_utils.dart';
+import 'package:chat_app/views/screens/aviabe_contacts.dart';
 import 'package:chat_app/views/screens/chatpage.dart';
 import 'package:chat_app/views/screens/homepage.dart';
 import 'package:chat_app/views/screens/loginpage.dart';
@@ -45,6 +46,10 @@ class MyApp extends StatelessWidget {
         GetPage(
           name: MyRoute.chat,
           page: () => ChatPage(),
+        ),
+        GetPage(
+          name: MyRoute.contacts,
+          page: () => Aviable_contacts(),
         ),
       ],
     );

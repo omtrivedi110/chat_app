@@ -53,16 +53,65 @@ class FirebaseHelper {
     firestore.collection(collection).doc(mail).set(tmpdata);
   }
 
-  addContactData({required String mail, required String senderMail}) async {
+  addIntoContact({required String mail, required String reciever}) async {
+    Map<String, dynamic>? sender = await getUser(mail: mail);
+    Map<String, dynamic>? recieve = await getUser(mail: reciever);
+    sender!['contacts'].add(reciever);
+    recieve!['contacts'].add(mail);
+
+    Map<String, dynamic> sent = {
+      '${recieve['id']}': {
+        'msg': ["hi"],
+        'time': ["10/10/2023-07:00"]
+      }
+    };
+
+    Map<String, dynamic> rec = {
+      "${recieve['id']}": {
+        'msg': ["hello"],
+        'time': ["10/10/2023-07:03"]
+      }
+    };
+
+    Map<String, dynamic> sent2 = {
+      '${sender['id']}': {
+        'msg': ["hi"],
+        'time': ["10/10/2023-07:00"]
+      }
+    };
+
+    Map<String, dynamic> rec2 = {
+      "${sender['id']}": {
+        'msg': ["hello"],
+        'time': ["10/10/2023-07:03"]
+      }
+    };
+
+    sender['sent'].addAll(sent);
+    sender['recieved'].addAll(rec);
+    recieve['sent'].addAll(rec2);
+    recieve['recieved'].addAll(sent2);
+
+    firestore.collection(collection).doc(mail).set(sender);
+    firestore.collection(collection).doc(reciever).set(recieve);
+  }
+
+  addContactData({required String senderMail, String? pass}) async {
+    String mail = "omtrivedi460@gmail.com";
     DocumentSnapshot snapshot =
         await firestore.collection(idCollection).doc("id").get();
+    DocumentSnapshot<Map<String, dynamic>> omsnap =
+        await firestore.collection(collection).doc(mail).get();
+    Map<String, dynamic>? ommap = omsnap.data();
     Map<String, dynamic>? myid = snapshot.data() as Map<String, dynamic>?;
-    myid!['id']++;
+    int id = myid!['id'];
+    id++;
     Map<String, dynamic> data = {
       "contacts": [mail],
       "name": "Newuser",
-      "pass": "iamnew${myid['id']}",
-      "id": myid['id'],
+      "mail": senderMail,
+      "pass": pass ?? "iamnew$id",
+      "id": id,
       "recieved": {
         '102': {
           'msg': [],
@@ -77,7 +126,16 @@ class FirebaseHelper {
       },
       "status": "offline",
     };
+    ommap!['contacts'].add(senderMail);
+    ommap['recieved'].addAll({
+      '$id': {'msg': [], 'time': []}
+    });
+    ommap['sent'].addAll({
+      '$id': {'msg': [], 'time': []}
+    });
     firestore.collection(collection).doc(senderMail).set(data);
+    firestore.collection(collection).doc(mail).set(ommap);
+    firestore.collection(idCollection).doc("id").set({'id': id});
   }
 
   Future<String> getId() async {
@@ -92,6 +150,10 @@ class FirebaseHelper {
     tmpdata!['status'] = "online";
 
     firestore.collection(collection).doc(mail).set(tmpdata);
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> getAviableContact() {
+    return firestore.collection(collection).snapshots();
   }
 
   editChat(
@@ -144,6 +206,25 @@ class FirebaseHelper {
     firestore.collection(collection).doc(sender).set(senderMap);
     firestore.collection(collection).doc(reciever).set(recievedMap);
   }
+
+  // deleteContact(
+  //     {required int index,
+  //     required String mail,
+  //     required String recieverMail}) async {
+  //   Map<String, dynamic>? senderMap = await getUser(mail: mail);
+  //   Map<String, dynamic>? recievedMap = await getUser(mail: recieverMail);
+  //
+  //   senderMap!['contacts'].remove(index);
+  //   recievedMap!['contacts'].remove(recieverMail);
+  //
+  //   senderMap['recieved'].remove(recievedMap['id']);
+  //   senderMap['sent'].remove(recievedMap['id']);
+  //   recievedMap['sent'].remove(senderMap['id']);
+  //   recievedMap['recieved'].remove(senderMap['id']);
+  //
+  //   firestore.collection(collection).doc(mail).set(senderMap);
+  //   firestore.collection(collection).doc(recieverMail).set(recievedMap);
+  // }
 
   String auto_generate_pass() {
     List number = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];

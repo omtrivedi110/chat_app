@@ -4,16 +4,26 @@ import 'package:chat_app/helpers/firebase_helper.dart';
 import 'package:chat_app/utils/route_utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:gap/gap.dart';
 import 'package:get/get.dart';
 
 // ignore: must_be_immutable
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   HomePage({super.key});
 
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   String mail = Get.arguments;
+
   String name = "";
+
   ThemeController themeController = Get.find();
+
+  TextEditingController mailController = TextEditingController();
+
+  TextEditingController passController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -34,12 +44,18 @@ class HomePage extends StatelessWidget {
                       },
                     ),
                     PopupMenuItem(
+                      child: const Text("Aviable Contact List"),
+                      onTap: () {
+                        Get.toNamed(MyRoute.contacts, arguments: mail);
+                      },
+                    ),
+                    PopupMenuItem(
                       child: const Text("Sign Out"),
                       onTap: () {
                         FirebaseHelper.firebaseHelper.logOut();
                         Get.offNamed(MyRoute.login);
                       },
-                    )
+                    ),
                   ]),
         ],
       ),
@@ -61,11 +77,12 @@ class HomePage extends StatelessWidget {
                         fontSize: 20.0,
                         fontWeight: FontWeight.bold,
                       ),
-                      speed: const Duration(milliseconds: 150),
+                      textAlign: TextAlign.center,
+                      speed: const Duration(milliseconds: 50),
                     ),
                   ],
                   totalRepeatCount: 1,
-                  pause: const Duration(milliseconds: 10),
+                  pause: const Duration(milliseconds: 5),
                   displayFullTextOnTap: true,
                   stopPauseOnTap: true,
                 )),
@@ -80,31 +97,17 @@ class HomePage extends StatelessWidget {
                     itemBuilder: (context, index) {
                       return Card(
                         child: ListTile(
-                          trailing: Text(""),
                           onTap: () async {
                             Map<String, dynamic>? recieved =
                                 await FirebaseHelper.firebaseHelper
                                     .getUser(mail: contacts[index]);
                             Map? data2;
-                            if (recieved != null) {
-                              data2 = {
-                                'name': recieved['name'],
-                                'mail': mail,
-                                'reciever': recieved['id'],
-                                'recievedMail': contacts[index],
-                              };
-                            }
-                            if (recieved == null) {
-                              data2 = {
-                                'name': "Kirti Kakalotar",
-                                'mail': mail,
-                                'reciever':
-                                    await FirebaseHelper.firebaseHelper.getId(),
-                                'recievedMail': contacts[index],
-                              };
-                              FirebaseHelper.firebaseHelper.addContactData(
-                                  mail: mail, senderMail: contacts[index]);
-                            }
+                            data2 = {
+                              'name': recieved!['name'],
+                              'mail': mail,
+                              'reciever': recieved['id'],
+                              'recievedMail': contacts[index],
+                            };
                             Get.toNamed(MyRoute.chat, arguments: data2);
                           },
                           title: Text(contacts[index].split('@')[0]),
@@ -142,11 +145,12 @@ class HomePage extends StatelessWidget {
               ),
             ),
             TextButton(
-                onPressed: () {
-                  FirebaseHelper.firebaseHelper.logOut();
-                  Get.offNamed(MyRoute.login);
-                },
-                child: const Text("Sign Out"))
+              onPressed: () {
+                FirebaseHelper.firebaseHelper.logOut();
+                Get.offNamed(MyRoute.login);
+              },
+              child: const Text("Sign Out"),
+            ),
           ],
         ),
       ),
@@ -160,7 +164,7 @@ class HomePage extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
-                    onSubmitted: (val) {},
+                    controller: mailController,
                     decoration: const InputDecoration(
                       hintText: "xyz@gmail.com",
                       labelText: "Mail",
@@ -171,7 +175,7 @@ class HomePage extends StatelessWidget {
                     height: 5,
                   ),
                   TextField(
-                    onSubmitted: (val) {},
+                    controller: passController,
                     decoration: const InputDecoration(
                       hintText: "1234",
                       labelText: "Password",
@@ -182,7 +186,14 @@ class HomePage extends StatelessWidget {
               ),
               actions: [
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    FirebaseHelper.firebaseHelper.addContactData(
+                        senderMail: mailController.text,
+                        pass: passController.text);
+                    mail = mailController.text;
+                    setState(() {});
+                    Navigator.of(context).pop();
+                  },
                   child: const Text("Register me"),
                 ),
                 TextButton.icon(

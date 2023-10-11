@@ -1,6 +1,10 @@
 
 
-https://github.com/omtrivedi110/chat_app/assets/131134704/9a095821-2f3b-4b2a-9142-9710c7c66b4b
+
+https://github.com/omtrivedi110/chat_app/assets/131134704/b383bdd0-a8ef-4eef-a52e-fa6ac0b8d35d
+
+
+
 
 Project Description:
 "Firebase Miner (Chat App)" is an innovative and secure mobile application developed using

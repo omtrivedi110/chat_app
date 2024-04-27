@@ -1,4 +1,5 @@
 
+**Note: Video Call Feature is on thw Way..**
 
 
 https://github.com/omtrivedi110/chat_app/assets/131134704/b383bdd0-a8ef-4eef-a52e-fa6ac0b8d35d
